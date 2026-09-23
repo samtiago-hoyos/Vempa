@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ClienteAuthService } from '../../core/cliente-auth.service';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-cliente-login',
@@ -38,10 +39,16 @@ export class ClienteLoginComponent implements OnInit {
   error: string | null = null;
   enviando = false;
 
-  constructor(public clienteAuth: ClienteAuthService, private router: Router) {}
+  constructor(
+    public clienteAuth: ClienteAuthService,
+    private adminAuth: AuthService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
-    if (this.clienteAuth.estaLogueado) {
+    if (this.adminAuth.session) {
+      this.router.navigate(['/admin']);
+    } else if (this.clienteAuth.estaLogueado) {
       this.router.navigate(['/']);
     }
   }
@@ -49,10 +56,21 @@ export class ClienteLoginComponent implements OnInit {
   async manejarEnvio() {
     this.enviando = true;
     this.error = null;
-    const { error } = await this.clienteAuth.iniciarSesion(this.email, this.password);
+
+    // Primero probamos como admin. Si el correo/contraseña no coincide con
+    // ninguna cuenta admin, el backend responde 401 y probamos como cliente.
+    // Solo si ambos fallan mostramos el error al usuario.
+    const admin = await this.adminAuth.signIn(this.email, this.password);
+    if (!admin.error) {
+      this.enviando = false;
+      this.router.navigate(['/admin']);
+      return;
+    }
+
+    const cliente = await this.clienteAuth.iniciarSesion(this.email, this.password);
     this.enviando = false;
-    if (error) {
-      this.error = (error as any).message || 'Correo o contraseña incorrectos.';
+    if (cliente.error) {
+      this.error = (cliente.error as any).message || 'Correo o contraseña incorrectos.';
     } else {
       this.router.navigate(['/']);
     }

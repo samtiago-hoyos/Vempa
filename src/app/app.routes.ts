@@ -29,11 +29,6 @@ export const routes: Routes = [
     path: 'favoritos',
     loadComponent: () => import('./pages/favoritos/favoritos.component').then((m) => m.FavoritosComponent),
   },
-  // Vista 5: Login de Administrador (Aquí debes entrar para usar tu cuenta Vempasport@gmail.com)
-  {
-    path: 'admin/login',
-    loadComponent: () => import('./pages/admin-login/admin-login.component').then((m) => m.AdminLoginComponent),
-  },
   // Vista 6: Lista de productos (Admin - Protegida por authGuard)
   {
     path: 'admin',
